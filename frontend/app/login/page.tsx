@@ -1,8 +1,7 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import Link from "next/link"
-import { useSearchParams } from "next/navigation"
 import { Zap, Eye, EyeOff } from "lucide-react"
 
 import { Button } from "@/components/ui/button"
@@ -13,8 +12,6 @@ import { Spinner } from "@/components/ui/spinner"
 import { api, saveToken } from "@/lib/api"
 
 export default function LoginPage() {
-  const searchParams = useSearchParams()
-
   const [showPassword, setShowPassword] = useState(false)
   const [isLoading, setIsLoading] = useState(false)
   const [showResend, setShowResend] = useState(false)
@@ -29,13 +26,28 @@ export default function LoginPage() {
     password: "",
   })
 
-  const isVerified = searchParams.get("verified") === "true"
+  // ✅ FIXED VERIFIED STATE
+  const [isVerified, setIsVerified] = useState(false)
+
+  useEffect(() => {
+    const params = new URLSearchParams(
+      window.location.search
+    )
+
+    setIsVerified(
+      params.get("verified") === "true"
+    )
+  }, [])
 
   const validateEmail = (email: string) => {
-    return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)
+    return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(
+      email
+    )
   }
 
-  const handleSubmit = async (e: React.FormEvent) => {
+  const handleSubmit = async (
+    e: React.FormEvent
+  ) => {
     e.preventDefault()
 
     const newErrors: {
@@ -44,18 +56,26 @@ export default function LoginPage() {
     } = {}
 
     if (!formData.email) {
-      newErrors.email = "Email is required"
-    } else if (!validateEmail(formData.email)) {
-      newErrors.email = "Invalid email format"
+      newErrors.email =
+        "Email is required"
+    } else if (
+      !validateEmail(formData.email)
+    ) {
+      newErrors.email =
+        "Invalid email format"
     }
 
     if (!formData.password) {
-      newErrors.password = "Password is required"
+      newErrors.password =
+        "Password is required"
     }
 
     setErrors(newErrors)
 
-    if (Object.keys(newErrors).length > 0) return
+    if (
+      Object.keys(newErrors).length > 0
+    )
+      return
 
     setIsLoading(true)
 
@@ -67,8 +87,12 @@ export default function LoginPage() {
 
       if (data.token) {
         saveToken(data.token)
-        window.location.href = "/dashboard"
-      } else if (data.notVerified) {
+
+        window.location.href =
+          "/dashboard"
+      } else if (
+        data.notVerified
+      ) {
         setErrors({
           email:
             "Please verify your email first! Check your inbox 📧",
@@ -77,44 +101,55 @@ export default function LoginPage() {
         setShowResend(true)
       } else {
         setErrors({
-          email: data.message || "Invalid credentials",
+          email:
+            data.message ||
+            "Invalid credentials",
         })
       }
     } catch (error) {
       console.error(error)
 
       setErrors({
-        email: "Something went wrong. Try again.",
+        email:
+          "Something went wrong. Try again.",
       })
     } finally {
       setIsLoading(false)
     }
   }
 
-  const handleResend = async () => {
-    try {
-      await fetch(
-        `${
-          process.env.NEXT_PUBLIC_API_URL ||
-          "http://localhost:5000/api"
-        }/auth/resend-verification`,
-        {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify({
-            email: formData.email,
-          }),
-        }
-      )
+  const handleResend =
+    async () => {
+      try {
+        await fetch(
+          `${
+            process.env
+              .NEXT_PUBLIC_API_URL ||
+            "http://localhost:5000/api"
+          }/auth/resend-verification`,
+          {
+            method: "POST",
+            headers: {
+              "Content-Type":
+                "application/json",
+            },
+            body: JSON.stringify({
+              email: formData.email,
+            }),
+          }
+        )
 
-      alert("Verification email resent! Check your inbox 📧")
-    } catch (error) {
-      console.error(error)
-      alert("Something went wrong. Try again.")
+        alert(
+          "Verification email resent! Check your inbox 📧"
+        )
+      } catch (error) {
+        console.error(error)
+
+        alert(
+          "Something went wrong. Try again."
+        )
+      }
     }
-  }
 
   return (
     <div className="min-h-screen bg-secondary flex items-center justify-center p-4">
@@ -153,7 +188,8 @@ export default function LoginPage() {
           onClick={() => {
             window.location.href =
               `${
-                process.env.NEXT_PUBLIC_API_URL ||
+                process.env
+                  .NEXT_PUBLIC_API_URL ||
                 "http://localhost:5000/api"
               }/auth/google`
           }}
@@ -216,13 +252,15 @@ export default function LoginPage() {
               onChange={(e) => {
                 setFormData({
                   ...formData,
-                  email: e.target.value,
+                  email:
+                    e.target.value,
                 })
 
                 if (errors.email) {
                   setErrors({
                     ...errors,
-                    email: undefined,
+                    email:
+                      undefined,
                   })
                 }
 
@@ -244,10 +282,13 @@ export default function LoginPage() {
             {showResend && (
               <button
                 type="button"
-                onClick={handleResend}
+                onClick={
+                  handleResend
+                }
                 className="text-sm text-primary hover:underline"
               >
-                Resend verification email →
+                Resend verification
+                email →
               </button>
             )}
           </div>
@@ -267,17 +308,24 @@ export default function LoginPage() {
                     : "password"
                 }
                 placeholder="Enter your password"
-                value={formData.password}
+                value={
+                  formData.password
+                }
                 onChange={(e) => {
                   setFormData({
                     ...formData,
-                    password: e.target.value,
+                    password:
+                      e.target
+                        .value,
                   })
 
-                  if (errors.password) {
+                  if (
+                    errors.password
+                  ) {
                     setErrors({
                       ...errors,
-                      password: undefined,
+                      password:
+                        undefined,
                     })
                   }
                 }}
@@ -291,7 +339,9 @@ export default function LoginPage() {
               <button
                 type="button"
                 onClick={() =>
-                  setShowPassword(!showPassword)
+                  setShowPassword(
+                    !showPassword
+                  )
                 }
                 className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground transition-colors"
               >
