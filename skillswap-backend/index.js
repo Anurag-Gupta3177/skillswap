@@ -11,32 +11,35 @@ connectDB()
 const app = express()
 const server = http.createServer(app)
 
+const ALLOWED_ORIGINS = [
+  "http://localhost:3000",
+  "https://skillswap.vercel.app",
+  "https://skillswap-p1si1hxlo-anurags-projects-29459dac.vercel.app",
+  process.env.CLIENT_URL
+].filter(Boolean)
+
 const io = new Server(server, {
   cors: {
-    origin: [
-      "http://localhost:3000",
-      "https://skillswap-p1si1hxlo-anurags-projects-29459dac.vercel.app",
-      process.env.CLIENT_URL
-    ].filter(Boolean),
+    origin: ALLOWED_ORIGINS,
     methods: ["GET", "POST"],
     credentials: true
   }
 })
-const passport = require("passport")
 
+const passport = require("passport")
 app.use(passport.initialize())
+
 app.use(cors({
-  origin: [
-    "http://localhost:3000",
-    "https://skillswap.vercel.app",
-    "https://skillswap-p1si1hxlo-anurags-projects-29459dac.vercel.app",
-    process.env.CLIENT_URL
-  ].filter(Boolean),
+  origin: ALLOWED_ORIGINS,
   credentials: true,
   methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
   allowedHeaders: ["Content-Type", "Authorization"]
 }))
+
+app.options("*", cors())
+
 app.use(express.json())
+
 app.use("/api/notifications", require("./routes/notifications"))
 app.use("/api/auth", require("./routes/auth"))
 app.use("/api/users", require("./routes/users"))
@@ -49,25 +52,18 @@ app.get("/", (req, res) => {
   res.json({ message: "SkillSwap API is running!" })
 })
 
-// Socket.io
 io.on("connection", (socket) => {
   console.log("User connected:", socket.id)
-
   socket.on("join_swap_room", (swapId) => {
     socket.join(swapId)
-    console.log(`User joined room: ${swapId}`)
   })
-
   socket.on("send_message", (data) => {
     io.to(data.swapId).emit("receive_message", data)
   })
-
   socket.on("disconnect", () => {
     console.log("User disconnected:", socket.id)
   })
 })
-
-
 
 const PORT = process.env.PORT || 5000
 server.listen(PORT, () => console.log(`Server running on port ${PORT}`))
